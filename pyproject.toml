@@ -1,0 +1,19 @@
+[project]
+name = "todo-api-practice"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi[standard]>=0.141.1",
+    "httpx>=0.28.1",
+    "httpx2>=2.13.1",
+    "pydantic>=2.13.5",
+    "sqlmodel>=0.0.44",
+    "typing>=3.10.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
