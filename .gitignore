@@ -5,6 +5,40 @@ build/
 dist/
 wheels/
 *.egg-info
+*.py[cod]
+*$py.class
+*.so
 
-# Virtual environments
-.venv
+# FastAPI / Python Secrets
+.env
+.env.local
+.env.*
+!.env.example
+*.pod
+*.pem
+*.key
+
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Testing & Code Quality 
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.black
+
+# Databases (SQLAlchemy / SQLModel / SQLite)
+*.db
+*.sqlite
+*.sqlite3
+
