@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from db.db import create_db_and_tables, SessionDep
+from db.db import create_db_and_tables
 
 from api.tasks import router as tasks_router
 from api.users import router as users_router

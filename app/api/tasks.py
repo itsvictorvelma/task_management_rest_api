@@ -1,22 +1,20 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from typing import List
+from typing import List, Annotated
+from fastapi.security import OAuth2PasswordBearer
 from sqlmodel import select
 from schemas.tasks import TaskCreate, TaskUpdate, TaskResponse
 from db.db import SessionDep
 from db.models import Task
+from api.deps import get_valid_task
 
 router = APIRouter()
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-def get_valid_task(task_id: int, session: SessionDep) -> Task:
-    task = session.get(Task, task_id)
-    if not task:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Task with ID {task_id} not found",
-        )
 
-    return task
+@router.get("/authTest")
+async def get_token(token: Annotated[str, Depends(oauth2_scheme)]):
+    return {"token": token}
 
 
 @router.post("/tasks", response_model=TaskResponse)
@@ -30,9 +28,12 @@ def create_task(task_in: TaskCreate, session: SessionDep):
 
     return new_task
 
-
 @router.get("/tasks", response_model=List[TaskResponse])
-def get_all_tasks(session: SessionDep, skip: int = 0, limit: int = 10):
+def get_all_tasks(
+    session: SessionDep,
+    skip: int = 0,
+    limit: int = 10,
+):
     statement = select(Task).offset(skip).limit(limit)
     return session.exec(statement).all()
 

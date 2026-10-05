@@ -1,26 +1,29 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import select
-from schemas.users import UserCreate, UserResponse, UserUpdate
+
 from db.db import SessionDep
 from db.models import User
+from schemas.users import UserCreate, UserResponse, UserUpdate
+from core.security import hash_password
+from api.deps import get_current_user
 
 router = APIRouter()
 
 
-def get_valid_user(user_id: int, session: SessionDep) -> User:
-    user = session.get(User, user_id)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="incorrect credentials and or they don't exist",
-        )
-
-    return user
-
-
 @router.post("/signup", response_model=UserResponse)
 def create_user(user_in: UserCreate, session: SessionDep):
-    new_user = User.model_validate(user_in)
+    """Registers a new user with a hashed_password."""
+    statement = select(User).where(User.username == user_in.username)
+    existing_user = session.exec(statement).first()
+
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="username already registered",
+        )
+
+    hashed_pwd = hash_password(user_in.password)
+    new_user = User(username=user_in.username, hashed_password=hashed_pwd)
 
     session.add(new_user)
     session.commit()
@@ -29,35 +32,29 @@ def create_user(user_in: UserCreate, session: SessionDep):
     return new_user
 
 
-@router.get("/users", response_model=list[UserResponse])
-def get_all_users(session: SessionDep):
-    statement = select(User)
-    return session.exec(statement).all()
+@router.get("/me", response_model=UserResponse)
+def get_currrent_user_profile(current_user: User = Depends(get_current_user)):
+    """returns the authenticated caller's profile"""
+    return current_user
 
 
-@router.get("/users/{user_id}", response_model=UserResponse)
-def get_user(user: User = Depends(get_valid_user)):
-    return user
-
-
-@router.put("/users/{user_id}", response_model=UserResponse)
-def update_user(
-    user_update: UserUpdate, session: SessionDep, user: User = Depends(get_valid_user)
+@router.put("/me", response_model=UserResponse)
+def update_current_user(
+    user_update: UserUpdate,
+    session: SessionDep,
+    current_user: User = Depends(get_current_user),
 ):
+    """Updates the authenticated caller's details"""
     update_data = user_update.model_dump(exclude_unset=True)
 
+    if "password" in update_data:
+        update_data["hashed_password"] = hash_password(update_data.pop("password"))
+
     for key, value in update_data.items():
-        setattr(user, key, value)
+        setattr(current_user, key, value)
 
-    session.add(user)
+    session.add(current_user)
     session.commit()
-    session.refresh(user)
+    session.refresh(current_user)
 
-    return user
-
-
-@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_user(session: SessionDep, user: User = Depends(get_valid_user)):
-    session.delete(user)
-    session.commit()
-    return None
+    return current_user
