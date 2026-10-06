@@ -1,19 +1,17 @@
 from datetime import datetime
-
-from pydantic import Field
-from sqlmodel import SQLModel
+from pydantic import Field, BaseModel
 
 
-class TaskBase(SQLModel):
+class TaskBase(BaseModel):
     title: str = Field(max_length=50)
     description: str | None = Field(default=None, max_length=200)
 
 
-class TaskCreate(TaskBase):
+class TaskCreate(BaseModel):
     pass
 
 
-class TaskUpdate(SQLModel):
+class TaskUpdate(BaseModel):
     title: str | None = Field(None, max_length=50)
     description: str | None = Field(None, max_length=250)
     completed: bool | None = Field(default=None)

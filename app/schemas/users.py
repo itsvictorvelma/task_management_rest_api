@@ -1,18 +1,24 @@
-from datetime import datetime
-
-from pydantic import Field
-from sqlmodel import SQLModel
+from pydantic import BaseModel, ConfigDict
 
 
-class UserCreate(SQLModel):
-    username: str = Field(max_length=50)
-    password: str = Field(max_length=100)
+class UserBase(BaseModel):
+    username: str
 
 
-class UserResponse(SQLModel):
-    username: str = Field(max_length=50)
+class UserCreate(UserBase):
+    password: str
 
 
-class UserUpdate(SQLModel):
-    username: str | None = Field(max_length=50)
-    password: str | None = Field(max_length=100)
+class userLogin(UserBase):
+    password: str
+
+
+class UserUpdate(BaseModel):
+    username: str | None = None
+    password: str | None = None
+
+
+class UserResponse(UserBase):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
